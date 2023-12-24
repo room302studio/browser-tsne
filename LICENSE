@@ -1,0 +1,15 @@
+### For Original Code by Room 302 Studio
+Copyright (c) 2023, Room 302 Studio
+All rights reserved.
+
+This license applies only to the proprietary code developed by Room 302 Studio and included in this software:
+- This proprietary code may not be used, copied, modified, merged, published, distributed, sublicensed, and/or sold without explicit permission from Room 302 Studio.
+- The above notice and this permission notice shall be included in all copies or substantial portions of the proprietary code.
+
+### For Open Source Dependencies (MIT License)
+The open-source dependencies used in this project, such as Nuxt, Vue, D3, and others listed in the project's package.json file, are licensed under their respective open-source licenses, including the MIT License. 
+- The MIT License permits use, copying, modification, merging, publication, distribution, sublicensing, and selling of these open-source components, provided the original MIT license notice is included with any substantial portions of these components.
+- This project's use of open-source dependencies abides by the terms and conditions of the MIT License.
+
+### Dual-Licensing
+In instances where Room 302 Studio's proprietary code is combined with open-source licensed code, this project is dual-licensed. Users must comply with both the terms of Room 302 Studio's proprietary license for its original code and the License for the open-source components.

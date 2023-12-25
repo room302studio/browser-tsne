@@ -1,17 +1,23 @@
 <template>
   <section>
-    <USelect v-model="mappingMethod" :options="['tsne', 'umap']" />
-    <svg :width="width" :height="height">
-      <g v-for="(embedding, index) in embeddingsMappedTo2D" :transform="embeddingToScreenTransform(embedding)"
-        class="embedding">
-        <circle r="2.5" :fill="colorScale(clusterId(index))" />
-        <text class="embedding-text" v-for="(line, lineIndex) in textToLines(embeddingIndexToData(index).text)"
-          :y="lineIndex * 13.2" fill="white" font-size="13px">{{ line }}</text>
-      </g>
+    <div class="controls p-4 md:p-12">
+      <USelect v-model="mappingMethod" :options="['tsne', 'umap']" />
 
-      <path v-for="(hull, index) in convexHulls" :d="hullPath(hull)" fill="none" :stroke="hullColor(index)"
-        stroke-width="1.5" />
-    </svg>
+      <URange v-model="numberOfClusters" :min="4" :max="40" />
+    </div>
+    <div ref="viz">
+      <svg :width="width" :height="height">
+        <g v-for="(embedding, index) in embeddingsMappedTo2D" :transform="embeddingToScreenTransform(embedding)"
+          class="embedding">
+          <circle r="2.5" :fill="colorScale(clusterId(index))" />
+          <text class="embedding-text" v-for="(line, lineIndex) in textToLines(embeddingIndexToData(index).text)"
+            :y="lineIndex * 13.2" fill="white" font-size="13px">{{ line }}</text>
+        </g>
+
+        <path v-for="(hull, index) in convexHulls" :d="hullPath(hull)" fill="none" :stroke="hullColor(index)"
+          stroke-width="1.5" />
+      </svg>
+    </div>
   </section>
 </template>
 
@@ -28,7 +34,7 @@ const { width, height } = useWindowSize();
 const inputDataRef = shallowRef(inputData);
 const { embeddingPositions: tsnePositions } = useTsne(inputDataRef);
 const { embeddingPositions: umapPositions } = useUmap(inputDataRef);
-const { clusterMap, performClustering } = useClustering();
+const { clusterMap, performClustering, numberOfClusters } = useClustering();
 
 const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 const xScale = d3.scaleLinear().range([0, width.value]);
@@ -64,9 +70,7 @@ function hullPath(hull) {
   return path + 'Z'; // Close the path
 }
 
-function hullColor(index) {
-  return colorScale(clusterId(index));
-}
+
 
 watchEffect(() => {
   embeddingsMappedTo2D.value = mappingMethod.value === 'tsne' ? tsnePositions.value : umapPositions.value;
@@ -90,6 +94,12 @@ const clusters = computed(() => {
 });
 
 const { convexHulls } = useConvexHulls(clusters);
+
+
+function hullColor(clusterIndex) {
+  return colorScale(clusterIndex);
+}
+
 
 
 </script>

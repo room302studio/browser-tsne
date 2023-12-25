@@ -52,5 +52,9 @@ export const useTsne = (inputData, options = {}) => {
     updateTsne();
   });
 
+  watch(options, () => {
+    updateTsne();
+  }, { deep: true });
+
   return { embeddingPositions };
 };

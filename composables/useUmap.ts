@@ -44,5 +44,9 @@ export const useUmap = (inputData, options = {}) => {
     updateEmbeddingPositions();
   });
 
+  watch(options, () => {
+    updateEmbeddingPositions();
+  }, { deep: true });
+
   return { embeddingPositions };
 };

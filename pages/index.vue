@@ -18,6 +18,7 @@
 
 <script setup>
 import { clustersKmeans, point, featureCollection } from '@turf/turf'
+import { textToLines } from '~/helpers'
 // import * as tsnejs from 'tsne'
 // import { UMAP } from 'umap-js';
 import * as d3 from 'd3'
@@ -25,7 +26,7 @@ import * as d3 from 'd3'
 import { useTsne } from '~/composables/useTsne';
 import { useUmap } from '~/composables/useUmap';
 
-const mappingMethod = ref('tsne'); // Default to 'umap', can be switched to 'tsne'
+const mappingMethod = ref('umap'); // Default to 'umap', can be switched to 'tsne'
 
 
 
@@ -69,9 +70,6 @@ watchEffect(() => {
   })
 })
 
-// find the extent of the data
-// const xExtent = d3.extent(embeddingsMappedTo2D.value, (d) => d[0])
-// const yExtent = d3.extent(embeddingsMappedTo2D.value, (d) => d[1])
 
 // we need a d3 linear scale to map the data to the screen
 const xScale = d3.scaleLinear()
@@ -86,24 +84,6 @@ function embeddingToScreenTransform(embedding) {
 
   return `translate(${x}, ${y})`
 }
-
-function textToLines(text) {
-  const maxLineWords = 5
-  const words = text.split(' ')
-  const lines = []
-  let currentLine = []
-  words.forEach((word) => {
-    if (currentLine.length < maxLineWords) {
-      currentLine.push(word)
-    } else {
-      lines.push(currentLine.join(' '))
-      currentLine = [word]
-    }
-  })
-  lines.push(currentLine.join(' '))
-  return lines
-}
-
 
 const embeddingsMappedTo2D = shallowRef([])
 
@@ -171,63 +151,6 @@ watch(
   },
   { deep: true }
 )
-
-// onMounted(() => {
-
-
-//   var opt = {}
-//   opt.epsilon = 10; // epsilon is learning rate (10 = default)
-//   opt.perplexity = 10; // roughly how many neighbors each point influences (30 = default)
-//   opt.dim = 2; // dimensionality of the embedding (2 = default)
-
-//   var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
-
-//   // initialize data using inputData embeddings
-//   tsne.initDataRaw(inputDataAsArray);
-
-//   // for (var k = 0; k < 3000; k++) {
-//   //   tsne.step(); // every time you call this, solution gets better
-//   //   embeddingsMappedTo2D.value = tsne.getSolution(); // Y is an array of 2-D points that you can plot
-//   // }
-
-//   let tick = 0
-
-//   // const { pause, resume } = useRafFn(() => {
-//   //   console.log('tick')
-//   //   tick++
-//   //   tsne.step(); // every time you call this, solution gets better
-//   //   // add some random noise to the solution
-//   //   embeddingsMappedTo2D.value = tsne.getSolution().map((embedding) => {
-//   //     if (tick < 500) {
-//   //       return embedding.map((value) => {
-//   //         return value + (Math.random() * 0.33)
-//   //       })
-//   //     } else {
-//   //       return embedding
-//   //     }
-//   //   });
-//   // })
-//   const umap = new UMAP({
-//     nComponents: 2,
-//     nEpochs: 400,
-//     minDist: 0.1,
-//     nNeighbors: 15,
-//   });
-
-//   const nEpochs = umap.initializeFit(inputDataAsArray);
-
-//   for (let i = 0; i < nEpochs * 0.5; i++) {
-//     umap.step();
-//   }
-
-//   const { pause, resume } = useRafFn(() => {
-//     umap.step();
-//     const embedding = umap.getEmbedding();
-//     embeddingsMappedTo2D.value = embedding
-//   })
-
-
-// })
 
 </script>
 

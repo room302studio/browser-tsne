@@ -27,4 +27,22 @@ function contrastTextColor(backgroundColor) {
   }
 }
 
-export { contrastTextColor };
+function textToLines(text) {
+  const maxLineWords = 5
+  const words = text.split(' ')
+  const lines = []
+  let currentLine = []
+  words.forEach((word) => {
+    if (currentLine.length < maxLineWords) {
+      currentLine.push(word)
+    } else {
+      lines.push(currentLine.join(' '))
+      currentLine = [word]
+    }
+  })
+  lines.push(currentLine.join(' '))
+  return lines
+}
+
+
+export { contrastTextColor, textToLines };

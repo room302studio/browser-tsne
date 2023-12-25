@@ -9,6 +9,11 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: pkg.version },
+
+      ],
+      // add js scripts to the head
+      script: [
+        { src: 'https://cdn.jsdelivr.net/npm/tsne@1.0.1/tsne.min.js' },
       ],
     },
   },

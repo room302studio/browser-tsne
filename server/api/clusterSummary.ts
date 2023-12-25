@@ -1,4 +1,3 @@
-import { defineEventHandler, useBody, getQuery } from 'h3'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -15,7 +14,7 @@ export const post = defineEventHandler(async (event) => {
   const summary = generateClusterSummary(points, content)
 
   const { data, error } = await supabase
-    .from('cluster_summaries')
+    .from('browser_tsne__cluster_summaries')
     .insert({ project_id, summary })
 
   if (error) {
@@ -30,7 +29,7 @@ export const get = defineEventHandler(async (event) => {
   const { project_id } = getQuery(event)
 
   const { data, error } = await supabase
-    .from('cluster_summaries')
+    .from('browser_tsne__cluster_summaries')
     .select('*')
     .eq('project_id', project_id)
 

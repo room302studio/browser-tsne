@@ -1,4 +1,3 @@
-import { defineEventHandler, useBody, getQuery } from 'h3'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(

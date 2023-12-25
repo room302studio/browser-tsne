@@ -1,10 +1,29 @@
 import { defineEventHandler } from 'h3'
-import { OpenAIApi, Configuration } from 'openai'
+import axios from 'axios';
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-const openai = new OpenAIApi(configuration)
+// set up .env
+import dotenv from 'dotenv';
+dotenv.config();
+
+async function getEmbedding(text) {
+  try {
+    const response = await axios.post('https://api.openai.com/v1/embeddings', {
+      input: text,
+      model: 'text-embedding-ada-002'
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      }
+    });
+    const embedding = response.data.data[0].embedding;
+    return embedding;
+  } catch (error) {
+    console.error('Error getting embedding:', error);
+    return null;
+  }
+}
+
 
 export default defineEventHandler(async (event) => {
   try {
@@ -15,11 +34,12 @@ export default defineEventHandler(async (event) => {
 
     const embeddings = await Promise.all(
       requestBody.data.map(async (text) => {
-        const response = await openai.createEmbedding({
-          model: "text-embedding-ada-002",
-          input: text
-        })
-        return response.data.data[0].embedding
+        const embedding = await getEmbedding(text);
+        // return embedding;
+        return {
+          text,
+          embedding
+        }
       })
     )
 

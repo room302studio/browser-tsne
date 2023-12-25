@@ -154,6 +154,7 @@ onMounted(() => {
   const umap = new UMAP({
     nComponents: 2,
     nEpochs: 400,
+    minDist: 0.1,
     nNeighbors: 15,
   });
 

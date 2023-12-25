@@ -12,7 +12,7 @@ export const post = defineEventHandler(async (event) => {
   const user = event.context.auth.user  // assuming user authentication context is available
 
   const { data, error } = await supabase
-    .from('projects')
+    .from('browser_tsne__projects')
     .insert([{ name, user_id: user.id }])
 
   if (error) {
@@ -27,7 +27,7 @@ export const get = defineEventHandler(async (event) => {
   const { name } = getQuery(event)
 
   const { data, error } = await supabase
-    .from('projects')
+    .from('browser_tsne__projects')
     .select('*')
     .eq('name', name)
     .single() // Assuming project names are unique

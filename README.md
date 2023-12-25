@@ -61,23 +61,20 @@ Return all projects for the logged in user.
 To effectively store and query vector embeddings in your database, a specific setup using the `pgvector` extension is required. This extension enables PostgreSQL to handle vector data efficiently.
 
 ## Database Schema
-The database consists of two main tables: `projects` and `embeddings`, designed to manage project information and store embeddings respectively.
+The database consists of two main tables: `projects` and `embeddings`, designed to manage project information and store embeddings respectively. Adapted from the [supabase documentation](https://supabase.com/blog/openai-embeddings-postgres-vector)
 
-### `projects` table
-This table stores information about various projects. Each project is uniquely identified by a UUID.
+`sql
+-- Ensure the pgvector extension is available
+CREATE EXTENSION IF NOT EXISTS vector;
 
-```sql
+-- Create browser_tsne__projects table
 CREATE TABLE browser_tsne__projects (
   id uuid DEFAULT uuid_generate_v4()::uuid PRIMARY KEY,
   name text,
   user_id uuid REFERENCES auth.users (id) ON DELETE CASCADE
 );
-```
 
-### `embeddings` table
-The embeddings table is central to storing vector embeddings. Each embedding is linked to a project and stored as a vector using the pgvector extension, optimized for efficient similarity searches. The x and y fields represent coordinates used for visualization or other applications.
-
-```sql
+-- Create browser_tsne__embeddings table
 CREATE TABLE browser_tsne__embeddings (
   id uuid DEFAULT uuid_generate_v4()::uuid PRIMARY KEY,
   project_id uuid REFERENCES browser_tsne__projects (id) ON DELETE CASCADE,
@@ -85,7 +82,24 @@ CREATE TABLE browser_tsne__embeddings (
   x float,
   y float
 );
+
+-- Create browser_tsne__cluster_summaries table
+CREATE TABLE browser_tsne__cluster_summaries (
+  id uuid DEFAULT uuid_generate_v4()::uuid PRIMARY KEY,
+  project_id uuid REFERENCES browser_tsne__projects (id) ON DELETE CASCADE,
+  summary text
+);
 ```
+
+### `browser_tsne__projects` table
+This table stores information about various projects. Each project is uniquely identified by a UUID.
+
+### `browser_tsne__embeddings` table
+The embeddings table is central to storing vector embeddings. Each embedding is linked to a project and stored as a vector using the pgvector extension, optimized for efficient similarity searches. The x and y fields represent coordinates used for visualization or other applications.
+
+### `browser_tsne__cluster_summaries` table
+This table stores the cluster summaries for a given project. Each cluster summary is linked to a project and stored as a text field.
+
 
 Certainly! Here's an additional section for your README, explaining the setup process for the database to support vectors, embeddings, and the `pgvector` extension:
 

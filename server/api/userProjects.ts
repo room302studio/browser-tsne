@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const user = event.context.auth.user  // assuming user authentication context is available
 
   const { data, error } = await supabase
-    .from('projects')
+    .from('browser_tsne__projects')
     .select('*')
     .eq('user_id', user.id)
 

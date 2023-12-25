@@ -8,6 +8,9 @@
         <text class="embedding-text" v-for="(line, lineIndex) in textToLines(embeddingIndexToData(index).text)"
           :y="lineIndex * 13.2" fill="white" font-size="13px">{{ line }}</text>
       </g>
+
+      <path v-for="(hull, index) in convexHulls" :d="hullPath(hull)" fill="none" :stroke="hullColor(index)"
+        stroke-width="1.5" />
     </svg>
   </section>
 </template>
@@ -52,6 +55,19 @@ function clusterId(index) {
   return clusterMap.value.get(index) || 0;
 }
 
+function hullPath(hull) {
+  // Assuming hull is a GeoJSON polygon, extract coordinates and form a path string
+  if (!hull || !hull.geometry || hull.geometry.type !== 'Polygon') return '';
+
+  const coordinates = hull.geometry.coordinates[0]; // First ring of the polygon
+  let path = 'M' + coordinates.map(coord => coord.join(',')).join('L');
+  return path + 'Z'; // Close the path
+}
+
+function hullColor(index) {
+  return colorScale(clusterId(index));
+}
+
 watchEffect(() => {
   embeddingsMappedTo2D.value = mappingMethod.value === 'tsne' ? tsnePositions.value : umapPositions.value;
   if (embeddingsMappedTo2D.value) {
@@ -59,6 +75,23 @@ watchEffect(() => {
     performClustering(embeddingsMappedTo2D.value);
   }
 });
+
+const clusters = computed(() => {
+  // Transform the clusterMap and embeddingsMappedTo2D into an array of clusters
+  const clusterGroups = new Map();
+  embeddingsMappedTo2D.value.forEach((embedding, index) => {
+    const clusterId = clusterMap.value.get(index);
+    if (!clusterGroups.has(clusterId)) {
+      clusterGroups.set(clusterId, []);
+    }
+    clusterGroups.get(clusterId).push([xScale(embedding[0]), yScale(embedding[1])]);
+  });
+  return Array.from(clusterGroups.values());
+});
+
+const { convexHulls } = useConvexHulls(clusters);
+
+
 </script>
 
 <style>

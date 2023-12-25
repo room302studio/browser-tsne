@@ -102,6 +102,8 @@ watchEffect(() => {
   clusters.value = kmeanClusters
 })
 
+// TODO: Render the cluster data instead of the raw data so we can color by cluster
+
 watch(
   () => embeddingsMappedTo2D.value,
   (newValue) => {

@@ -1,7 +1,7 @@
 // composables/useUmap.js
 
 import { UMAP } from 'umap-js';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRafFn } from '@vueuse/core';
 
 export const useUmap = (inputData, options = {}) => {
@@ -14,11 +14,12 @@ export const useUmap = (inputData, options = {}) => {
     ...options
   };
 
-  onMounted(() => {
-    const umap = new UMAP(defaultOptions);
-    const inputDataAsArray = inputData.map(item => item.embedding);
+  const umap = new UMAP(defaultOptions);
 
+  const updateEmbeddingPositions = () => {
+    const inputDataAsArray = inputData.value.map(item => item.embedding);
     const nEpochs = umap.initializeFit(inputDataAsArray);
+
     const stepFunction = () => {
       umap.step();
       const embedding = umap.getEmbedding();
@@ -32,7 +33,15 @@ export const useUmap = (inputData, options = {}) => {
     const { pause, resume } = useRafFn(stepFunction);
 
     // Optionally return pause and resume functions to control the UMAP process
-    return { embeddingPositions, pause, resume };
+    return { pause, resume };
+  };
+
+  onMounted(() => {
+    updateEmbeddingPositions();
+  });
+
+  watch(inputData, () => {
+    updateEmbeddingPositions();
   });
 
   return { embeddingPositions };

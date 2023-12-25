@@ -18,38 +18,17 @@
 
 <script setup>
 import { clustersKmeans, point, featureCollection } from '@turf/turf'
-import * as tsnejs from 'tsne'
-import { UMAP } from 'umap-js';
+// import * as tsnejs from 'tsne'
+// import { UMAP } from 'umap-js';
 import * as d3 from 'd3'
 
 import { useTsne } from '~/composables/useTsne';
 import { useUmap } from '~/composables/useUmap';
 
-const { embeddingsMappedTo2D: tsnePositions } = useTsne(inputData);
-
-const { embeddingsMappedTo2D: umapPositions } = useUmap(inputData);
-
-const mappingMethod = ref('umap'); // Default to 'umap', can be switched to 'tsne'
+const mappingMethod = ref('tsne'); // Default to 'umap', can be switched to 'tsne'
 
 
 
-watchEffect(() => {
-  if (tsnePositions && mappingMethod.value === 'tsne') {
-    // Update scales based on new t-SNE data
-    const xExtent = d3.extent(tsnePositions?.value, d => d[0]);
-    const yExtent = d3.extent(tsnePositions?.value, d => d[1]);
-    xScale.domain(xExtent);
-    yScale.domain(yExtent);
-  }
-
-  if (umapPositions && mappingMethod.value === 'umap') {
-    // Update scales based on new UMAP data
-    const xExtent = d3.extent(umapPositions?.value, d => d[0]);
-    const yExtent = d3.extent(umapPositions?.value, d => d[1]);
-    xScale.domain(xExtent);
-    yScale.domain(yExtent);
-  }
-});
 
 
 const { width, height } = useWindowSize()
@@ -62,6 +41,12 @@ function embeddingIndexToData(index) {
 
 import inputData from '~/assets/openAI_embeddings.json'
 
+const inputDataRef = shallowRef(inputData)
+
+const { embeddingPositions: tsnePositions } = useTsne(inputDataRef);
+
+const { embeddingPositions: umapPositions } = useUmap(inputDataRef);
+
 /*
 inputData is an array filled with objects that look like this:
 
@@ -72,8 +57,16 @@ inputData is an array filled with objects that look like this:
 */
 
 // we need to convert it to an array of arrays and keep track of the index
-const inputDataAsArray = inputData.map((item) => {
-  return item.embedding
+// const inputDataAsArray = inputData.value.map((item) => {
+//   return item.embedding
+// })
+
+const inputDataAsArray = ref([])
+watchEffect(() => {
+  if (!inputDataRef.value) return
+  inputDataAsArray.value = inputDataRef.value.map((item) => {
+    return item.embedding
+  })
 })
 
 // find the extent of the data
@@ -112,10 +105,39 @@ function textToLines(text) {
 }
 
 
-const embeddingsMappedTo2D = ref([])
+const embeddingsMappedTo2D = shallowRef([])
 
 // make a computed that turns the embeddings into a GeoJSON FeatureCollection of points using turf
 const embeddingsAsFeatureCollection = ref(null)
+
+watchEffect(() => {
+  if (tsnePositions && mappingMethod.value === 'tsne') {
+    // Update scales based on new t-SNE data
+    const xExtent = d3.extent(tsnePositions?.value, d => d[0]);
+    const yExtent = d3.extent(tsnePositions?.value, d => d[1]);
+    xScale.domain(xExtent);
+    yScale.domain(yExtent);
+  }
+
+  if (umapPositions && mappingMethod.value === 'umap') {
+    // Update scales based on new UMAP data
+    const xExtent = d3.extent(umapPositions?.value, d => d[0]);
+    const yExtent = d3.extent(umapPositions?.value, d => d[1]);
+    xScale.domain(xExtent);
+    yScale.domain(yExtent);
+  }
+});
+
+watchEffect(() => {
+  if (mappingMethod.value === 'tsne') {
+    embeddingsMappedTo2D.value = tsnePositions?.value
+  }
+
+  if (mappingMethod.value === 'umap') {
+    embeddingsMappedTo2D.value = umapPositions?.value
+  }
+})
+
 
 watchEffect(() => {
   if (!embeddingsMappedTo2D.value) return
@@ -150,62 +172,62 @@ watch(
   { deep: true }
 )
 
-onMounted(() => {
+// onMounted(() => {
 
 
-  var opt = {}
-  opt.epsilon = 10; // epsilon is learning rate (10 = default)
-  opt.perplexity = 10; // roughly how many neighbors each point influences (30 = default)
-  opt.dim = 2; // dimensionality of the embedding (2 = default)
+//   var opt = {}
+//   opt.epsilon = 10; // epsilon is learning rate (10 = default)
+//   opt.perplexity = 10; // roughly how many neighbors each point influences (30 = default)
+//   opt.dim = 2; // dimensionality of the embedding (2 = default)
 
-  var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
+//   var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
 
-  // initialize data using inputData embeddings
-  tsne.initDataRaw(inputDataAsArray);
+//   // initialize data using inputData embeddings
+//   tsne.initDataRaw(inputDataAsArray);
 
-  // for (var k = 0; k < 3000; k++) {
-  //   tsne.step(); // every time you call this, solution gets better
-  //   embeddingsMappedTo2D.value = tsne.getSolution(); // Y is an array of 2-D points that you can plot
-  // }
+//   // for (var k = 0; k < 3000; k++) {
+//   //   tsne.step(); // every time you call this, solution gets better
+//   //   embeddingsMappedTo2D.value = tsne.getSolution(); // Y is an array of 2-D points that you can plot
+//   // }
 
-  let tick = 0
+//   let tick = 0
 
-  // const { pause, resume } = useRafFn(() => {
-  //   console.log('tick')
-  //   tick++
-  //   tsne.step(); // every time you call this, solution gets better
-  //   // add some random noise to the solution
-  //   embeddingsMappedTo2D.value = tsne.getSolution().map((embedding) => {
-  //     if (tick < 500) {
-  //       return embedding.map((value) => {
-  //         return value + (Math.random() * 0.33)
-  //       })
-  //     } else {
-  //       return embedding
-  //     }
-  //   });
-  // })
-  const umap = new UMAP({
-    nComponents: 2,
-    nEpochs: 400,
-    minDist: 0.1,
-    nNeighbors: 15,
-  });
+//   // const { pause, resume } = useRafFn(() => {
+//   //   console.log('tick')
+//   //   tick++
+//   //   tsne.step(); // every time you call this, solution gets better
+//   //   // add some random noise to the solution
+//   //   embeddingsMappedTo2D.value = tsne.getSolution().map((embedding) => {
+//   //     if (tick < 500) {
+//   //       return embedding.map((value) => {
+//   //         return value + (Math.random() * 0.33)
+//   //       })
+//   //     } else {
+//   //       return embedding
+//   //     }
+//   //   });
+//   // })
+//   const umap = new UMAP({
+//     nComponents: 2,
+//     nEpochs: 400,
+//     minDist: 0.1,
+//     nNeighbors: 15,
+//   });
 
-  const nEpochs = umap.initializeFit(inputDataAsArray);
+//   const nEpochs = umap.initializeFit(inputDataAsArray);
 
-  for (let i = 0; i < nEpochs * 0.5; i++) {
-    umap.step();
-  }
+//   for (let i = 0; i < nEpochs * 0.5; i++) {
+//     umap.step();
+//   }
 
-  const { pause, resume } = useRafFn(() => {
-    umap.step();
-    const embedding = umap.getEmbedding();
-    embeddingsMappedTo2D.value = embedding
-  })
+//   const { pause, resume } = useRafFn(() => {
+//     umap.step();
+//     const embedding = umap.getEmbedding();
+//     embeddingsMappedTo2D.value = embedding
+//   })
 
 
-})
+// })
 
 </script>
 

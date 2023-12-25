@@ -1,11 +1,11 @@
 // composables/useTsne.js
 
 import * as tsnejs from 'tsne';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRafFn } from '@vueuse/core';
 
 export const useTsne = (inputData, options = {}) => {
-  const embeddingsMappedTo2D = ref([]);
+  const embeddingPositions = ref([]);
   const defaultOptions = {
     epsilon: 10, // learning rate
     perplexity: 10, // number of neighbors
@@ -13,10 +13,10 @@ export const useTsne = (inputData, options = {}) => {
     ...options
   };
 
-  onMounted(() => {
-    const tsne = new tsnejs.tSNE(defaultOptions);
-    const inputDataAsArray = inputData.map(item => item.embedding);
+  const tsne = new tsnejs.tSNE(defaultOptions);
 
+  const updateTsne = () => {
+    const inputDataAsArray = inputData.value.map(item => item.embedding);
     tsne.initDataRaw(inputDataAsArray);
 
     let tick = 0;
@@ -25,11 +25,11 @@ export const useTsne = (inputData, options = {}) => {
       tsne.step(); // Improve the solution with each step
       // Optionally add some random noise to the solution in the initial phase
       if (tick < 500) {
-        embeddingsMappedTo2D.value = tsne.getSolution().map(embedding => 
+        embeddingPositions.value = tsne.getSolution().map(embedding => 
           embedding.map(value => value + (Math.random() * 0.33))
         );
       } else {
-        embeddingsMappedTo2D.value = tsne.getSolution();
+        embeddingPositions.value = tsne.getSolution();
       }
     };
 
@@ -41,8 +41,16 @@ export const useTsne = (inputData, options = {}) => {
     const { pause, resume } = useRafFn(stepFunction);
 
     // Optionally return pause and resume functions to control the t-SNE process
-    return { embeddingsMappedTo2D, pause, resume };
+    return { embeddingPositions, pause, resume };
+  };
+
+  onMounted(() => {
+    updateTsne();
   });
 
-  return { embeddingsMappedTo2D };
+  watch(inputData, () => {
+    updateTsne();
+  });
+
+  return { embeddingPositions };
 };

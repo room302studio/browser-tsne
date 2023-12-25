@@ -15,7 +15,9 @@
 </template>
 
 <script setup>
+import { clustersKmeans, point, featureCollection } from '@turf/turf'
 import * as tsnejs from 'tsne'
+import { UMAP } from 'umap-js';
 import * as d3 from 'd3'
 
 const { width, height } = useWindowSize()
@@ -59,7 +61,7 @@ function embeddingToScreenTransform(embedding) {
 }
 
 function textToLines(text) {
-  const maxLineWords = 4
+  const maxLineWords = 5
   const words = text.split(' ')
   const lines = []
   let currentLine = []
@@ -77,6 +79,28 @@ function textToLines(text) {
 
 
 const embeddingsMappedTo2D = ref([])
+
+// make a computed that turns the embeddings into a GeoJSON FeatureCollection of points using turf
+const embeddingsAsFeatureCollection = ref(null)
+
+watchEffect(() => {
+  if (!embeddingsMappedTo2D.value) return
+  if (!embeddingsMappedTo2D.value.length) return
+  console.log('calculating feature collection', embeddingsMappedTo2D.value)
+  const points = embeddingsMappedTo2D.value.map((embedding, index) => {
+    return point(embedding, { id: index })
+  })
+  embeddingsAsFeatureCollection.value = featureCollection(points)
+})
+
+const clusters = ref([])
+
+watchEffect(() => {
+  if (!embeddingsAsFeatureCollection.value) return
+  console.log('calculating clusters', embeddingsAsFeatureCollection.value)
+  const kmeanClusters = clustersKmeans(embeddingsAsFeatureCollection.value, { numberOfClusters: 5 })
+  clusters.value = kmeanClusters
+})
 
 watch(
   () => embeddingsMappedTo2D.value,
@@ -110,23 +134,37 @@ onMounted(() => {
 
   let tick = 0
 
+  // const { pause, resume } = useRafFn(() => {
+  //   console.log('tick')
+  //   tick++
+  //   tsne.step(); // every time you call this, solution gets better
+  //   // add some random noise to the solution
+  //   embeddingsMappedTo2D.value = tsne.getSolution().map((embedding) => {
+  //     if (tick < 500) {
+  //       return embedding.map((value) => {
+  //         return value + (Math.random() * 0.33)
+  //       })
+  //     } else {
+  //       return embedding
+  //     }
+  //   });
+  // })
+  const umap = new UMAP({
+    nComponents: 2,
+    nEpochs: 400,
+    nNeighbors: 15,
+  });
+
+  const nEpochs = umap.initializeFit(inputDataAsArray);
+
+  for (let i = 0; i < nEpochs * 0.5; i++) {
+    umap.step();
+  }
+
   const { pause, resume } = useRafFn(() => {
-    console.log('tick')
-    tick++
-    tsne.step(); // every time you call this, solution gets better
-    // add some random noise to the solution
-    embeddingsMappedTo2D.value = tsne.getSolution().map((embedding) => {
-      if (tick < 500) {
-        return embedding.map((value) => {
-          return value + (Math.random() * 0.33)
-        })
-      } else {
-        return embedding
-      }
-
-
-    });
-    // embeddingsMappedTo2D.value = tsne.getSolution();
+    umap.step();
+    const embedding = umap.getEmbedding();
+    embeddingsMappedTo2D.value = embedding
   })
 
 

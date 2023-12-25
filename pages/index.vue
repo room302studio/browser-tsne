@@ -1,5 +1,7 @@
 <template>
   <section>
+
+    <USelect v-model="mappingMethod" :options="['tsne', 'umap']" />
     <svg :width="width" :height="height">
       <!-- <circle v-for="embedding in embeddingsMappedTo2D" :cx="embedding[0]" :cy="embedding[1]" r="1" fill="red" /> -->
 
@@ -20,7 +22,39 @@ import * as tsnejs from 'tsne'
 import { UMAP } from 'umap-js';
 import * as d3 from 'd3'
 
+import { useTsne } from '~/composables/useTsne';
+import { useUmap } from '~/composables/useUmap';
+
+const { embeddingsMappedTo2D: tsnePositions } = useTsne(inputData);
+
+const { embeddingsMappedTo2D: umapPositions } = useUmap(inputData);
+
+const mappingMethod = ref('umap'); // Default to 'umap', can be switched to 'tsne'
+
+
+
+watchEffect(() => {
+  if (tsnePositions && mappingMethod.value === 'tsne') {
+    // Update scales based on new t-SNE data
+    const xExtent = d3.extent(tsnePositions?.value, d => d[0]);
+    const yExtent = d3.extent(tsnePositions?.value, d => d[1]);
+    xScale.domain(xExtent);
+    yScale.domain(yExtent);
+  }
+
+  if (umapPositions && mappingMethod.value === 'umap') {
+    // Update scales based on new UMAP data
+    const xExtent = d3.extent(umapPositions?.value, d => d[0]);
+    const yExtent = d3.extent(umapPositions?.value, d => d[1]);
+    xScale.domain(xExtent);
+    yScale.domain(yExtent);
+  }
+});
+
+
 const { width, height } = useWindowSize()
+
+
 
 function embeddingIndexToData(index) {
   return inputData[index]

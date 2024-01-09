@@ -7,7 +7,7 @@ export const useConvexHulls = (clusters) => {
 
   watchEffect(() => {
     convexHulls.value = clusters.value.map(cluster => {
-      console.log('cluster:', cluster);
+      // console.log('cluster:', cluster);
       const points = turf.featureCollection(cluster.map(pt => turf.point(pt)));
       const convexHull = turf.convex(points);
       return convexHull;      

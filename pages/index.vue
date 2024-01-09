@@ -4,6 +4,27 @@
       <USelect v-model="mappingMethod" :options="['tsne', 'umap']" />
 
       <URange v-model="numberOfClusters" :min="4" :max="40" />
+      <label>Number of Clusters: {{ numberOfClusters }}</label>
+
+      <URange v-model="options.epsilon" :min="1" :max="50" />
+      <label>Epsilon: {{ options.epsilon }}</label>
+
+      <URange v-model="options.perplexity" :min="1" :max="50" />
+      <label>Perplexity: {{ options.perplexity }}</label>
+
+      <URange v-model="options.learningRate" :min="10" :max="1000" />
+      <label>Learning Rate: {{ options.learningRate }}</label>
+
+      <label>Steps: {{ steps }}</label>
+
+      <UDivider />
+
+      <UButton @click="pause" class="mr-2 my-2">Pause</UButton>
+      <UButton @click="resume" class="mr-2 my-2">Resume</UButton>
+      <UButton @click="restart" class="mr-2 my-2">Restart</UButton>
+
+
+
     </div>
     <div ref="viz">
       <svg :width="width" :height="height">
@@ -29,10 +50,10 @@ import { textToLines } from '~/helpers';
 import { useClustering } from '~/composables/useClustering';
 import inputData from '~/assets/openAI_embeddings.json';
 
-const mappingMethod = ref('umap');
+const mappingMethod = ref('tsne');
 const { width, height } = useWindowSize();
 const inputDataRef = shallowRef(inputData);
-const { embeddingPositions: tsnePositions } = useTsne(inputDataRef);
+const { embeddingPositions: tsnePositions, options, steps, pause, resume, restart } = useTsne(inputDataRef);
 const { embeddingPositions: umapPositions } = useUmap(inputDataRef);
 const { clusterMap, performClustering, numberOfClusters } = useClustering();
 
@@ -41,6 +62,16 @@ const xScale = d3.scaleLinear().range([0, width.value]);
 const yScale = d3.scaleLinear().range([0, height.value]);
 
 const embeddingsMappedTo2D = shallowRef([]);
+
+
+
+// when the tsne steps exceeds 100, stop the tsne
+watchEffect(() => {
+  if (steps.value > 100) {
+    pause();
+  }
+});
+
 
 function embeddingIndexToData(index) {
   return inputData[index];
